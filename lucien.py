@@ -28,5 +28,4 @@ async def on_ready():
         for member in guild.members:
             print(member)
 
-
 client.run(TOKEN)
