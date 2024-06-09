@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from discord.ext import commands
 from config import member_roles
 
-logging.basicConfig(filename="logs/lucen.log", level=logging.INFO)
+logging.basicConfig(filename="logs/lucien.log", level=logging.INFO)
 
 load_dotenv()
 
@@ -15,7 +15,7 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 GUILD = os.getenv("DISCORD_GUILD")
 ADMIN_ID = os.getenv("LUCIEN_ADMIN")
 
-description = "Lucien is a discord bot developed by srawalke."
+description = "Lucien is a Discord bot developed by srawalke."
 
 intents = discord.Intents.default()
 intents.members = True
@@ -26,6 +26,10 @@ bot = commands.Bot(command_prefix="/", description=description, intents=intents)
 member_cache = {}
 
 
+"""
+An event handler that is called when the bot has successfully connected to the server.
+Will log the server name and id that the bot is connected to.
+"""
 @bot.event
 async def on_ready():
     for guild in bot.guilds:
@@ -38,13 +42,24 @@ async def on_ready():
     )
 
 
+"""
+An event handler that is called when a message is sent in the server.
+Author of the message will be checked against the member_cache.
+If the author is in the member_cache, the message will be deleted.
+"""
 @bot.event
-async def mute():
+async def on_message(message):
     global member_cache
-    for member in member_cache.values():
-        await member.edit(mute=True)
+    if message.author.id in member_cache:
+        await message.delete()
+        await bot.process_commands(message)
+    else:
+        await bot.process_commands(message)
 
 
+"""
+A command that will return the list of members that are currently cached.
+"""
 @bot.command()
 async def get_cache(ctx):
     global member_cache
@@ -55,6 +70,10 @@ async def get_cache(ctx):
         await ctx.send("Cache is empty.")
 
 
+"""
+A command that will add members specified in the arguments to the member_cache.
+If the member is not found in the member_cache, a message will be sent.
+"""
 @bot.command()
 async def set_mute_member(ctx, *args):
     global member_cache
@@ -83,6 +102,10 @@ async def set_mute_member(ctx, *args):
         await ctx.send(f"Member `{member}` has been cached.")
 
 
+"""
+A command that will display the list of members in the server.
+Only members with roles specified in the member_roles list will be displayed.
+"""
 @bot.command()
 async def get_members(ctx):
     members = ctx.guild.members
@@ -93,12 +116,17 @@ async def get_members(ctx):
     await ctx.send(members)
 
 
+"""
+A command that will determine if the arguments are integers or strings.
+If the arguments are integers, they will be added together.
+If the arguments are strings, they will be concatenated.
+If the arguments are not integers or strings, an error message will be sent.
+"""
 @bot.command()
 async def add(ctx, left, right):
     """Adds two numbers together."""
     if left.isdigit() and right.isdigit():
-        int_left, int_right = int(left), int(right)
-        await ctx.send(int_left + int_right)
+        await ctx.send(int(left) + int(right))
     elif isinstance(left, str) and isinstance(right, str):
         await ctx.send(left + right)
     else:
